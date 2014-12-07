@@ -3,9 +3,8 @@ package DDC;
 
 use strict;
 use warnings;
-use parent 'Data::Coloured';
-
-our @EXPORT_OK = qw();
+use Data::Coloured qw( pc c );
+use Exporter 'import';
 
 our @EXPORT = qw( pc c coloured poloured );
 
