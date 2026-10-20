@@ -1,0 +1,9 @@
+claude: true
+prompt: |
+  Drain the Data-Coloured karr board. This is the ASCII/binary visualiser — a small
+  pure-Perl distribution that renders a byte stream as ANSI-coloured text, with
+  Data::Coloured holding the logic, DDC as a thin re-export alias and the ddc CLI
+  script on top. Delegate behavior-relevant code to the data-coloured-worker agent and
+  release audits to data-coloured-release-manager; follow
+  .claude/rules/data-coloured-rules.md. Never release. Work that belongs to a
+  sister repository is a ticket on that repo's board, not a local edit.
