@@ -47,18 +47,3 @@ name.
 
 Short alias for L</coloured>. This is L<Data::Coloured>'s function of the same
 name.
-
-=head1 SUPPORT
-
-IRC
-
-  Join #vonbienenstock on irc.freenode.net. Highlight Getty for fast reaction :).
-
-Repository
-
-  http://github.com/Getty/p5-data-coloured
-  Pull request and additional contributors are welcome
-
-Issue Tracker
-
-  http://github.com/Getty/p5-data-coloured/issues

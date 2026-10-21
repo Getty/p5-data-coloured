@@ -175,18 +175,3 @@ Short alias for L</poloured>. This module exports it only on request.
     my $coloured = c($data);
 
 Short alias for L</coloured>. This module exports it only on request.
-
-=head1 SUPPORT
-
-IRC
-
-  Join #vonbienenstock on irc.freenode.net. Highlight Getty for fast reaction :).
-
-Repository
-
-  http://github.com/Getty/p5-data-coloured
-  Pull request and additional contributors are welcome
-
-Issue Tracker
-
-  http://github.com/Getty/p5-data-coloured/issues
