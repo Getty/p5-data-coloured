@@ -1,72 +1,64 @@
 # Data-Coloured House Rules
 
 Apply to every task in this repository unless explicitly overridden. Bias: caution over
-speed on non-trivial work; use judgment on trivial tasks. Loaded automatically at launch
-(same priority as `CLAUDE.md`). Subagents get their conventions from the skills
-force-loaded via `briefing.skills` — this file is for the orchestrating agent.
+speed on non-trivial work; use judgment on trivial tasks. Skill content is never restated
+here: the skills are the source, and the agents get them force-loaded via `briefing.skills`.
 
 ## Engineering discipline
 
-1. **Think before coding** — State assumptions. When uncertain, ask rather than guess.
-   Push back when a simpler approach exists. Stop when confused; name what's unclear.
-2. **Simplicity first** — Minimum code that solves the problem. Nothing speculative.
-   This is a small function library; a new dependency needs a real justification.
-3. **Surgical changes** — Touch only what you must. Don't "improve" adjacent code,
-   comments or formatting. Match the existing layout.
-4. **Tests verify intent, not just behavior** — Reproduce a bug before fixing it; leave
-   a regression test behind. The three colour classes and the export tiers are the
-   product — a test that can't fail when they change is not a test.
+1. **Think before coding** — State assumptions, ask rather than guess, push back when a
+   simpler approach exists, stop when confused and name what is unclear.
+2. **Simplicity first** — Minimum code that solves the problem, nothing speculative. A new
+   dependency needs a real justification.
+3. **Surgical changes** — Touch only what you must; don't improve adjacent code, comments
+   or formatting. Match the existing layout.
+4. **Tests verify intent, not just behavior** — Reproduce a bug before fixing it, leave a
+   regression test behind. A test that can't fail when the contract changes is no test.
 5. **Match the codebase's conventions, even if you disagree** — Conformance > taste.
    Surface a harmful convention; don't fork silently.
-6. **Fail loud** — "Done" is wrong if anything was skipped silently. "Tests pass" is
-   wrong if any were skipped. Surface uncertainty, don't hide it.
+6. **Fail loud** — "Done" is wrong if anything was skipped silently. Surface uncertainty,
+   don't hide it.
 7. **A red test is a claim before it is a failure** — Before changing code to turn a test
-   green, say what it asserts and whether your fix keeps that claim or replaces it. If
-   the claim is wrong, fix the claim and say so; don't quietly make the code match it.
+   green, say what it asserts and whether your fix keeps that claim or replaces it.
 
 ## Delegation
 
-Depends on whether the Agent/Task tool is available to you.
+If you can spawn subagents (orchestrating main agent): do NOT touch behavior-relevant code
+yourself — delegate. Your lane: coordinate, inspect, plan, review diffs, run tests, edit
+non-behavioral docs. You get no briefing — the classification is too subtle for that.
 
-- **You can spawn subagents** (orchestrating main agent): Do NOT touch behavior-relevant
-  code yourself — delegate. Your lane: coordinate, inspect, plan, review diffs, run tests,
-  edit non-behavioral docs. Why: only the `data-coloured-*` agents get their skills
-  force-loaded via `briefing.skills`; you get no briefing and would touch the character
-  classification with too little context.
+| Task | Agent |
+|---|---|
+| Implement / refactor / debug behavior-relevant code | `data-coloured-worker` (default) |
+| Commits, `Changes`, card → done, pre-release audit | `data-coloured-release-manager` |
 
-  | Task | Agent |
-  |---|---|
-  | Implement / refactor / debug behavior-relevant code | `data-coloured-worker` (default) |
-  | Commits, `Changes`, card → done, pre-release audit | `data-coloured-release-manager` |
+If you ARE a `data-coloured-*` agent, the delegation lock does not apply — implement,
+refactor, debug and test per these rules.
 
-- **You cannot spawn subagents** (you ARE a `data-coloured-*` agent): The
-  delegation lock does not apply — implement, refactor, debug and test per these rules.
+Behavior-relevant = anything in `lib/`, the tests, the exported function set, the character
+classification and its rendering, and the export tiers. `README.md` and `Changes` wording
+are not.
 
-Behavior-relevant = anything in `lib/`, the tests, the exported function set, the
-character classification and its rendering, and the export tiers. `README.md` and
-`Changes` wording are not.
-
-**Only `data-coloured-release-manager` commits.** A worker leaves a commit-ready tree
-and hands its card to `review`; you then dispatch `data-coloured-release-manager` to
-cut the commit and close the card.
+**Only `data-coloured-release-manager` commits.** A worker leaves a commit-ready tree and
+hands its card to `review`; you then dispatch the release-manager to cut the commit and
+close the card.
 
 ## The rendering contract is the product — don't regress it silently
 
-This is a tiny module whose whole value is *how a byte is rendered*. The three-way
-classification (control characters by name in square brackets, printable characters
-as-is, everything else as hex in angle brackets), the exact colour per class, the
-delimiters, the `TAB` naming of control code 9 and the two export tiers are what
-callers depend on. A change to any of them is a user-visible change: it needs a
-`Changes` entry and a test. Full contract table: skill `data-coloured-core`.
+This tiny module's whole value is *how a byte is rendered*. The three-way classification
+(control characters by name in square brackets, printable as-is, everything else as hex in
+angle brackets), the exact colour per class, the delimiters, the `TAB` naming of control
+code 9 and the two export tiers are what callers depend on. Any change to them is
+user-visible: `Changes` entry plus test. Contract table: skill `data-coloured-core`.
 
-The unit question — byte or character — is the sharp edge. The two branches of the
-classification must agree on it; a fix that widens the printable branch without
-deciding what the hex branch means leaves the rendering incoherent.
+The unit question — byte or character — is the sharp edge. Both branches of the
+classification must agree on it; a fix that widens the printable branch without deciding
+what the hex branch means leaves the rendering incoherent.
 
 ## Coordination — karr board (always in scope)
 
-Ticket coordination is the orchestrating agent's job, so `karr` is always in scope —
-don't invoke the skill first, just use it. Board state lives in `refs/karr/*`.
+Ticket coordination is the orchestrating agent's job, so `karr` is always in scope — don't
+invoke the skill first, just use it. Board state lives in `refs/karr/*`.
 
 - `karr list --compact` / `karr board` — open work · `karr show ID` — detail
 - `karr create "Title" --priority high --tags a,b --body '…'` — new ticket
@@ -77,32 +69,22 @@ don't invoke the skill first, just use it. Board state lives in `refs/karr/*`.
 Card life cycle: you claim and hand out → the worker notes and ends at `review` → the
 release-manager commits and moves it to `done`.
 
-**Serialize board mutations when fanning out.** Keep implementation work parallel if you
-like, but collect the results and then loop the `karr move`/`handoff`/`sync` calls
-sequentially — N of them landing at once is a resource event, not a cheap command.
-Full command surface: skill `kanban-issues-karr-coordination`.
+**Serialize board mutations when fanning out.** Collect the results, then loop the
+`karr move`/`handoff`/`sync` calls sequentially — N of them landing at once is a resource
+event, not a cheap command. Full command surface: skill `kanban-issues-karr-coordination`.
 
 ## Release — never without permission
 
-`dzil build` / `dzil test` / `prove -lr t/` are fine anytime. `dzil release` and any
-CPAN upload are STRICTLY forbidden without the maintainer's explicit go-ahead — even if
-a plan lists "release" as the next step. Stop and ask.
+`dzil build` / `dzil test` / `prove -lr t/` are fine anytime. `dzil release` and any CPAN
+upload are STRICTLY forbidden without the maintainer's explicit go-ahead — even if a plan
+lists "release" as the next step. Stop and ask. No push, no tag.
 
-The last CPAN release is 0.003 (2015). The next is 0.004 — the version is derived at
-release time by the release skill, not copied back from CPAN.
+The last CPAN release is 0.003 (2015); the next is 0.004, derived at release time by
+`getty-perl-release-author-getty` — not copied back from CPAN.
 
 ## Public issues — never act without instruction
 
-`karr` is the internal agent board, churned freely. The GitHub issue tracker carries
-real people's reports, written under the maintainer's account. Never act on a public
-issue on your own initiative — not even to read it. No listing, viewing, commenting,
-closing or creating unless the user explicitly says to handle a specific one. The
-2014 Unicode issue is tracked on the internal board; work happens there.
-
-## Perl specifics — reference, don't restate
-
-Module loading, cpanfile pinning for Getty-authored dependencies, POD conventions and
-house style live in skills `getty-perl-core`, `getty-perl-pod` and
-`getty-perl-release-author-getty` (force-loaded for `data-coloured-*` agents). The
-export contract, the colour classes and the encoding rules live in skill
-`data-coloured-core`. Do not duplicate them here.
+`karr` is the internal agent board, churned freely. The GitHub issue tracker carries real
+people's reports, written under the maintainer's account. Never act on a public issue on
+your own initiative — not even to read it. The 2014 Unicode issue (GitHub #1) is tracked
+on the internal board; work happens there.
