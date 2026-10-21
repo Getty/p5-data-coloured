@@ -11,3 +11,9 @@ Revision history for Data-Coloured
     cpanfile, so the distribution installs its dependencies automatically.
   - DDC exports all four functions coloured, poloured, pc and c, so a script
     that imports DDC gets the complete API of Data::Coloured.
+  - The ddc script shows its usage for --help and -h on STDOUT, reports an
+    unknown option, a missing file and a closed standard input on STDERR
+    and exits with 2, 1 and 1, so a broken command line is told apart from
+    a successful run.
+  - The ddc script points its SUPPORT section at the repository of this
+    distribution.

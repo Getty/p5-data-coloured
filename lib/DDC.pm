@@ -6,6 +6,8 @@ use warnings;
 use Data::Coloured qw( pc c coloured poloured );
 use Exporter 'import';
 
+our $VERSION = '0.004';
+
 our @EXPORT = qw( pc c coloured poloured );
 
 1;

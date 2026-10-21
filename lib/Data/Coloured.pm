@@ -6,6 +6,8 @@ use warnings;
 use Exporter 'import';
 use Term::ANSIColor qw( colored );
 
+our $VERSION = '0.004';
+
 our @EXPORT_OK = qw( pc c );
 our @EXPORT = qw( coloured poloured );
 

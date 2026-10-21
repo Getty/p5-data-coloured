@@ -6,32 +6,162 @@ use strict;
 use warnings;
 use DDC;
 
+our $VERSION = '0.004';
+
 $|=1;
+
+# The usage, printed for --help.
+sub usage {
+  return <<'USAGE';
+Usage: ddc [OPTION]... [FILE]...
+
+Print a coloured dump of FILE. Without FILE, or when FILE is -, the data is
+read from standard input.
+
+Control characters are shown by name in square brackets, printable characters
+as they are, everything else as hex in angle brackets.
+
+Options:
+  -h, --help     show this help and exit
+USAGE
+}
+
+# The command line. An argument that starts with a dash is an option, every
+# other argument is a file name. The option -- ends the options, every
+# argument behind it is a file name. A single dash means standard input.
+my @files;
+my $help = 0;
+my $only_files = 0;
+
+for my $argument (@ARGV) {
+  if ($only_files) {
+    push @files, $argument;
+  }
+  elsif ($argument eq '--') {
+    $only_files = 1;
+  }
+  elsif ($argument eq '-h' or $argument eq '--help') {
+    $help = 1;
+  }
+  elsif ($argument eq '-') {
+    push @files, $argument;
+  }
+  elsif ($argument =~ /^-/) {
+    print STDERR 'ddc: unknown option '.$argument."\n";
+    print STDERR "Try 'ddc --help' for more information.\n";
+    exit 2;
+  }
+  else {
+    push @files, $argument;
+  }
+}
+
+# The help wins over the files, the script reads nothing when it is asked
+# for it.
+if ($help) {
+  print usage();
+  exit 0;
+}
+
+# Every file has to be there and has to be readable.
+for my $file (@files) {
+  next if $file eq '-';
+  if (not -e $file) {
+    print STDERR 'ddc: '.$file.': No such file or directory'."\n";
+    exit 1;
+  }
+  if (not -r $file) {
+    print STDERR 'ddc: '.$file.': Permission denied'."\n";
+    exit 1;
+  }
+}
+
+# Standard input is the source when no file is given or when a file is the
+# single dash. It has to be a readable handle.
+if (not @files or grep { $_ eq '-' } @files) {
+  if (not stdin_is_readable()) {
+    print STDERR "ddc: standard input is not readable\n";
+    exit 1;
+  }
+}
+
+# Standard input is readable when it is an open handle and when it is not
+# the script itself. A closed handle has no file descriptor any more. When
+# the shell closed standard input before the program was started (ddc <&-),
+# Perl opened the script on the free descriptor 0, so the handle is open but
+# reads the program instead of the data.
+sub stdin_is_readable {
+  return 0 unless defined fileno(STDIN);
+  return 0 if stdin_is_the_script();
+  return 1;
+}
+
+# True when standard input is the running script.
+sub stdin_is_the_script {
+  my @stdin = stat(STDIN);
+  my @script = stat($0);
+  return 0 unless @stdin and @script;
+  return 1 if $stdin[0] == $script[0] and $stdin[1] == $script[1];
+  return 0;
+}
+
+# The magic filehandle reads the files of @ARGV, so @ARGV has to hold the
+# file names alone.
+@ARGV = @files;
 
 while (<>) {
   pc($_);
   print "\n" if eof;
 }
 
-=encoding utf8
-
 =head1 SYNOPSIS
 
+  ddc [OPTION]... [FILE]...
+
   ddc somefile
+  ddc < stream
 
 =head1 DESCRIPTION
 
-Display coloured dump of file
+Print a coloured dump of FILE. Without FILE, or when FILE is -, the data is
+read from standard input.
+
+Control characters are shown by name in square brackets, printable characters
+as they are, everything else as hex in angle brackets.
+
+=head1 OPTIONS
+
+=over
+
+=item -h, --help
+
+Show the usage and exit. The option is accepted in any position, also behind
+a file name, and the script reads nothing when it is given.
+
+=back
+
+An argument that starts with a dash is an option, every other argument is a
+file name. The option -- ends the options, every argument behind it is a
+file name. A single dash means standard input. The files are read in the
+order they are given. An unknown option is an error, also when the help is
+asked for.
+
+=head1 EXIT STATUS
+
+  0  the dump was printed
+  1  the data could not be read, the file is missing or not readable or
+     standard input is closed
+  2  the command line was wrong, the option is unknown
 
 =head1 SUPPORT
 
 Repository
 
-  https://github.com/Getty/p5-anyevent-itm
+  https://github.com/Getty/p5-data-coloured
   Pull request and additional contributors are welcome
- 
+
 Issue Tracker
 
-  https://github.com/Getty/p5-anyevent-itm/issues
+  https://github.com/Getty/p5-data-coloured/issues
 
 =cut
