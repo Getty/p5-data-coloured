@@ -61,6 +61,9 @@ sub pc { poloured(@_) }
 
 sub coloured {
   my $data = join('',@_);
+  # The flag decides the unit of the rendering. A string that carries the
+  # UTF-8 flag is read as characters, a string without it as bytes.
+  my $is_utf8 = defined $_[0] && utf8::is_utf8($_[0]) ? 1 : 0;
   my @chars = split(//,$_[0]);
   my $output = "";
   for my $char (@chars) {
@@ -70,12 +73,24 @@ sub coloured {
     } elsif ($char =~ /[ -~]/) {
       $output .= colored($char,$colours{print});
     } else {
-      $output .= colored($binary_delimiter[0].unpack('H*',$char).$binary_delimiter[1], $colours{binary});
+      my $hex = $is_utf8 ? _utf8_hex($char) : unpack('H*',$char);
+      $output .= colored($binary_delimiter[0].$hex.$binary_delimiter[1], $colours{binary});
     }
   }
   return $output;
 }
 sub c { coloured(@_) }
+
+# The hex representation of a character of a string that carries the UTF-8
+# flag. The character is encoded to its UTF-8 bytes first, so a multi-byte
+# character shows the bytes the stream really contained and not its code
+# point.
+sub _utf8_hex {
+  my $bytes = $_[0];
+  utf8::upgrade($bytes);
+  utf8::encode($bytes);
+  return unpack('H*',$bytes);
+}
 
 1;
 
@@ -117,6 +132,12 @@ the colour B<bright_yellow>.
 
 All non printable characters, so those above 127, are converted into their hex
 value and surrounded by angle brackets.
+
+The data is read as characters when it carries the UTF-8 flag and as bytes
+when it does not. A multi-byte character of such a string is converted into
+the hex value of its UTF-8 bytes, so the character U+00E4 shows up as
+B<<c3a4>> and not as B<<e4>>. Every single byte of a string without the flag
+is shown on its own, so B<0xff> stays B<<ff>>.
 
 =back
 

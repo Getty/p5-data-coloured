@@ -1,0 +1,112 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use Test::More;
+use Data::Coloured;
+
+# The rendering contract: control characters by name in square brackets in
+# bright red, printable characters as they are in bright yellow, everything
+# else as hex in angle brackets in bright cyan.
+
+my $CONTROL = 91;    # ANSI bright red
+my $PRINT   = 93;    # ANSI bright yellow
+my $BINARY  = 96;    # ANSI bright cyan
+
+# The names of the control characters, code 9 is TAB and not HT.
+my %control_name = (
+  0 => 'NUL',   1 => 'SOH',  2 => 'STX',  3 => 'ETX',  4 => 'EOT',
+  5 => 'ENQ',   6 => 'ACK',  7 => 'BEL',  8 => 'BS',   9 => 'TAB',
+  10 => 'LF',  11 => 'VT',  12 => 'FF',  13 => 'CR',  14 => 'SO',
+  15 => 'SI',  16 => 'DLE', 17 => 'DC1', 18 => 'DC2', 19 => 'DC3',
+  20 => 'DC4', 21 => 'NAK', 22 => 'SYN', 23 => 'ETB', 24 => 'CAN',
+  25 => 'EM',  26 => 'SUB', 27 => 'ESC', 28 => 'FS',  29 => 'GS',
+  30 => 'RS',  31 => 'US', 127 => 'DEL',
+);
+
+# The text of a rendered string without any ANSI sequence.
+sub strip_ansi {
+  my $rendered = shift;
+  $rendered =~ s/\e\[[0-9;]*m//g;
+  return $rendered;
+}
+
+# The colour codes a rendered string uses, reset codes are dropped. This pins
+# the colour itself (bright red is ANSI 91) without depending on how a
+# specific Term::ANSIColor version spells the reset sequence.
+sub colour_codes {
+  my $rendered = shift;
+  my @codes;
+  while ($rendered =~ /\e\[([0-9;]*)m/g) {
+    for my $code (split(/;/, $1)) {
+      next if $code eq '' || $code eq '0';
+      push @codes, $code;
+    }
+  }
+  return @codes;
+}
+
+# A character that carries the UTF-8 flag, like a string decoded from UTF-8.
+sub wide {
+  my $char = chr($_[0]);
+  utf8::upgrade($char);
+  return $char;
+}
+
+# Every byte from 0 to 127 renders exactly as it always did.
+for my $byte (0..127) {
+  my $control = exists $control_name{$byte};
+  my $text = $control ? '['.$control_name{$byte}.']' : chr($byte);
+  my $colour = $control ? $CONTROL : $PRINT;
+
+  my $rendered = coloured(chr($byte));
+  is(strip_ansi($rendered), $text, sprintf('byte %d (0x%02x) renders as %s',$byte,$byte,$text));
+  is_deeply([colour_codes($rendered)], [$colour], sprintf('byte %d (0x%02x) is in ANSI colour %d',$byte,$byte,$colour));
+}
+
+# A byte that is no valid text stays visible, it is not decoded.
+{
+  my $rendered = coloured("\xff");
+  is(strip_ansi($rendered), '<ff>', 'an unflagged byte 0xff renders as <ff>');
+  is_deeply([colour_codes($rendered)], [$BINARY], 'an unflagged byte 0xff is in ANSI colour '.$BINARY);
+}
+
+# A multi-byte character is rendered from its UTF-8 bytes and not from its
+# code point.
+{
+  my $aumlaut = wide(0xe4);
+  my $euro    = wide(0x20ac);
+  ok(utf8::is_utf8($aumlaut), 'the test fixture carries the UTF-8 flag');
+  ok(utf8::is_utf8($euro), 'the test fixture carries the UTF-8 flag');
+
+  my $rendered = coloured($aumlaut);
+  is(strip_ansi($rendered), '<c3a4>', 'U+00E4 renders as its UTF-8 bytes <c3a4>');
+  is_deeply([colour_codes($rendered)], [$BINARY], 'U+00E4 is in ANSI colour '.$BINARY);
+
+  $rendered = coloured($euro);
+  is(strip_ansi($rendered), '<e282ac>', 'U+20AC renders as its UTF-8 bytes <e282ac>');
+  is_deeply([colour_codes($rendered)], [$BINARY], 'U+20AC is in ANSI colour '.$BINARY);
+}
+
+# ASCII and multi-byte characters side by side.
+{
+  my $rendered = coloured('a'.wide(0xe4)."\x00".wide(0x20ac));
+  is(strip_ansi($rendered), 'a<c3a4>[NUL]<e282ac>', 'ASCII, control and multi-byte characters render in order');
+  is_deeply([colour_codes($rendered)], [$PRINT,$BINARY,$CONTROL,$BINARY], 'each character keeps its own colour');
+}
+
+# The UTF-8 flag does not change the rendering of ASCII.
+{
+  my $ascii = join('',map { chr($_) } 0..127);
+  my $flagged = $ascii;
+  utf8::upgrade($flagged);
+  ok(utf8::is_utf8($flagged), 'the ASCII test fixture carries the UTF-8 flag');
+  is(coloured($flagged), coloured($ascii), 'ASCII renders the same with and without the UTF-8 flag');
+}
+
+# The result stays ASCII, it is not encoded.
+{
+  my $rendered = coloured('a'.wide(0xe4).wide(0x20ac));
+  like($rendered, qr/\A[\x00-\x7f]*\z/, 'the rendered result stays ASCII');
+}
+
+done_testing;
