@@ -20,6 +20,34 @@ DDC is an alias module for it. It exports the four functions C<coloured>,
 C<poloured>, C<c> and C<pc> under the same names, so that a script which
 wants only the visualiser needs a single import.
 
+=func coloured
+
+    my $coloured = coloured($data);
+
+Returns the data rendered as coloured text. This is L<Data::Coloured>'s
+function of the same name.
+
+=func poloured
+
+    poloured($data);
+
+Prints the data rendered as coloured text. This is L<Data::Coloured>'s
+function of the same name.
+
+=func pc
+
+    pc($data);
+
+Short alias for L</poloured>. This is L<Data::Coloured>'s function of the same
+name.
+
+=func c
+
+    my $coloured = c($data);
+
+Short alias for L</coloured>. This is L<Data::Coloured>'s function of the same
+name.
+
 =head1 SUPPORT
 
 IRC

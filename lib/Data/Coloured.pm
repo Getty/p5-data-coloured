@@ -150,6 +150,32 @@ of them.
 
 =back
 
+=func coloured
+
+    my $coloured = coloured($data);
+
+Returns the data rendered as coloured text. Every argument is rendered on its
+own and the parts are returned in the order the arguments were given.
+
+=func poloured
+
+    poloured($data);
+
+Prints the data rendered as coloured text. Same rendering as L</coloured>, but
+to STDOUT instead of returning it.
+
+=func pc
+
+    pc($data);
+
+Short alias for L</poloured>. This module exports it only on request.
+
+=func c
+
+    my $coloured = c($data);
+
+Short alias for L</coloured>. This module exports it only on request.
+
 =head1 SUPPORT
 
 IRC

@@ -1,6 +1,9 @@
 Revision history for Data-Coloured
 
 {{$NEXT}}
+  - Data::Coloured and DDC document the four exported functions coloured,
+    poloured, pc and c with a section of their own, so the POD names what a
+    caller gets.
   - A call with more than one argument renders all of them, so
     coloured('a','b') shows "ab". Every argument keeps its own unit, a byte
     argument next to an argument with characters still shows its bytes as
