@@ -1,6 +1,9 @@
 Revision history for Data-Coloured
 
 {{$NEXT}}
+  - The internal knowledge base of the repository states the Unicode rule as
+    the decision in force: the UTF-8 flag of a string decides the unit of its
+    rendering, an unflagged string stays a byte stream.
   - The release tarball no longer carries the agent files of the repository,
     the .claude directory and the worktree marker are out of it. CLAUDE.md
     stays, it describes the architecture of the distribution.

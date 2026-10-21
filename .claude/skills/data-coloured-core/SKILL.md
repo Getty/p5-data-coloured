@@ -42,8 +42,8 @@ Callers of `DDC` get the short aliases **unconditionally**, even though
 `Data::Coloured` only offers them on request — that is the point of the alias module.
 
 A new public function is added to `@EXPORT_OK` in `Data::Coloured` and to the
-`@EXPORT` list in `DDC`, and to the POD of both modules in the same edit. Nothing is
-exported under a name that does not exist.
+`@EXPORT` list in `DDC`, and gets a `=func` entry in the POD of **both** modules in
+the same edit. Nothing is exported under a name that does not exist.
 
 ## The three colour classes
 
@@ -75,6 +75,8 @@ Keep that order when touching the loop.
 - **Binary** characters (everything above 127) are rendered as their hex value in
   angle brackets: `<ff>`.
 - **Control** characters are rendered as their name in square brackets: `[ETX]`.
+- Every argument of a call is rendered on its own, the parts are put together in the
+  order the arguments were given.
 
 The point of the binary branch is that a byte which is not valid text still has to be
 *visible* — `<ff>` is more useful in a terminal than a raw byte that the terminal
@@ -82,34 +84,41 @@ interprets or drops.
 
 ## The Unicode trap — read this before touching the character loop
 
-This is the known defect of the distribution (GitHub issue #1, "Wrong output for
-Unicode chars", open since 2014) and it lives in the character split:
+The trap is real, but it is **solved** since the fix of GitHub issue #1 ("Wrong output
+for Unicode chars", open since 2014). The rule that is in force now:
 
-```perl
-my @chars = split(//, $_[0]);
-```
+**The UTF-8 flag of a string decides the unit of its rendering.**
 
-`split //` splits **by characters**, not bytes, when the string carries the UTF-8
-flag — and a multi-byte UTF-8 character then reaches the binary branch as a single
-wide character. `unpack('H*', $char)` on a wide character yields its **code point**,
-not its UTF-8 bytes, so `ä` comes out as `<e4>` instead of `<c3a4>`. The rendering is
-also wrong for the printable branch, because the `/[ -~]/` test is a byte range that a
-wide character never matches.
+- A string **with** the flag is read as characters, and a multi-byte character is
+  rendered from its **UTF-8 bytes**: U+00E4 shows as `<c3a4>`, U+20AC as `<e282ac>`.
+- A string **without** the flag stays a byte stream: every byte is its own unit, so
+  0xff shows as `<ff>`.
 
-Whichever way this is fixed — decoding the input explicitly, splitting on bytes, or
-handling the wide-character case separately — the fix must keep these two properties:
+Both branches of the classification use the same unit — the printable branch and the
+hex branch must always agree on what a "character" is.
 
-1. **ASCII behaviour is unchanged.** Every byte in 0–127 renders exactly as it does
-   today. The existing test suite pins this.
+The unit is decided **per argument**, not per call: `coloured("\xff", $aumlaut)`
+renders `<ff><c3a4>`. The arguments are deliberately **not joined** before the
+rendering — a `join` lifts an argument without the flag into a string with the flag,
+and the byte 0xff would then be read as the character U+00FF and show as `<c3bf>`
+instead of `<ff>`.
+
+Two properties stay fixed and are pinned by the test suite:
+
+1. **ASCII behaviour is unchanged.** Every byte in 0–127 renders exactly as it always
+   did, with and without the flag.
 2. **A multi-byte character is rendered from its UTF-8 bytes**, not from its code
    point, so what appears in the terminal is what the stream actually contained.
 
-Do not "fix" it by making the printable branch accept wide characters without
-deciding what the hex branch then means — the two branches must agree on what a
-"character" is. Whatever the agreed unit is, it is the same unit in both branches.
+The trap still lurks where the split happens: `split //` splits **by characters** when
+the flag is set, and `unpack('H*', $char)` on a wide character yields its **code
+point**, not its UTF-8 bytes (`<e4>` instead of `<c3a4>`). That is why the hex branch
+encodes the character first (`_utf8_hex`) — a change to the loop must not lose that
+encoding step, and it must not widen the printable branch to accept wide characters
+without deciding what the hex branch then means.
 
 Note that `poloured`/`pc` print directly to the handle, while `coloured`/`c` return a
-string — a fix that changes the returned bytes (e.g. by encoding the result) changes
+string — a change that changes the returned bytes (e.g. by encoding the result) changes
 what a caller gets, and that needs a `Changes` entry.
 
 ## The `bin/ddc` script
@@ -119,15 +128,18 @@ coloured via `pc`, and appends a newline only at the end of a file (`print "\n" 
 eof`). `$| = 1` keeps the output unbuffered — that matters, because the script is
 meant for watching a live stream, where a buffered line would defeat the purpose.
 
-The script's POD still points at `p5-anyevent-itm` — a copy/paste leftover from
-another repository. That is wrong and should be corrected when the script's docs are
-touched.
+The POD of the script is written by hand and documents the synopsis, the options and
+the exit status; the bundle adds the generated sections around it. The exit status is
+part of the contract: 0 the dump was printed, 1 the data could not be read, 2 the
+command line was wrong.
 
 ## Tests
 
-`t/00-load.t` loads both modules (`Data::Coloured`, `DDC`). The behavioural contract —
-the three colour classes, the delimiters, the `TAB` naming, the export tiers — needs
-its own test file; a load test alone does not pin any of it.
+`t/00-load.t` loads both modules (`Data::Coloured`, `DDC`), `t/01-render.t` pins the
+behavioural contract — the three colour classes, the delimiters, the `TAB` naming and
+the unit that decides how a byte is rendered — `t/02-export.t` pins the export tiers
+and `t/03-cli.t` the command line of the script. A new behaviour needs a new
+assertion in the file that owns it.
 
 Run with `prove -lr t/` or `dzil test`.
 
