@@ -63,6 +63,23 @@ for my $byte (0..127) {
   is_deeply([colour_codes($rendered)], [$colour], sprintf('byte %d (0x%02x) is in ANSI colour %d',$byte,$byte,$colour));
 }
 
+# The delimiters are package variables, a caller may change them and the
+# rendering reads them at call time.
+{
+  is_deeply(\@Data::Coloured::control_delimiter, ['[',']'], 'the control characters are surrounded by square brackets');
+  is_deeply(\@Data::Coloured::binary_delimiter, ['<','>'], 'the binary characters are surrounded by angle brackets');
+}
+
+# The delimiters are read at call time, so a caller can change them.
+{
+  local @Data::Coloured::control_delimiter = ('{','}');
+  local @Data::Coloured::binary_delimiter = ('(',')');
+  is(strip_ansi(coloured("\x00")), '{NUL}', 'the control delimiter is used at call time');
+  is(strip_ansi(coloured("\xff")), '(ff)', 'the binary delimiter is used at call time');
+  is_deeply([colour_codes(coloured("\x00"))], [$CONTROL], 'the control character keeps its colour');
+  is_deeply([colour_codes(coloured("\xff"))], [$BINARY], 'the binary character keeps its colour');
+}
+
 # A byte that is no valid text stays visible, it is not decoded.
 {
   my $rendered = coloured("\xff");
