@@ -7,3 +7,5 @@ Revision history for Data-Coloured
     as a committed LICENSE file.
   - README.md documents the module, its two export tiers and all four functions.
   - Continuous integration runs on GitHub Actions for Perl 5.36, 5.38 and 5.40.
+  - Declare the runtime dependencies Term::ANSIColor and Exporter in the
+    cpanfile, so the distribution installs its dependencies automatically.
