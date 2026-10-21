@@ -1,0 +1,7 @@
+Revision history for Data-Coloured
+
+{{$NEXT}}
+  - The distribution builds from the source tree and ships the Perl 5 licence
+    as a committed LICENSE file.
+  - README.md documents the module, its two export tiers and all four functions.
+  - Continuous integration runs on GitHub Actions for Perl 5.36, 5.38 and 5.40.
