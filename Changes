@@ -1,6 +1,10 @@
 Revision history for Data-Coloured
 
 {{$NEXT}}
+  - A call with more than one argument renders all of them, so
+    coloured('a','b') shows "ab". Every argument keeps its own unit, a byte
+    argument next to an argument with characters still shows its bytes as
+    <ff>.
   - A multi-byte UTF-8 character is now rendered from its UTF-8 bytes instead
     of its code point, so "ä" shows up as <c3a4> and not as <e4>.
   - The distribution builds from the source tree and ships the Perl 5 licence

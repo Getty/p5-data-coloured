@@ -126,4 +126,35 @@ for my $byte (0..127) {
   like($rendered, qr/\A[\x00-\x7f]*\z/, 'the rendered result stays ASCII');
 }
 
+# A call with more than one argument renders every argument, in the order
+# they were given.
+{
+  my $rendered = coloured('a','b');
+  is(strip_ansi($rendered), 'ab', 'both arguments are rendered');
+  is_deeply([colour_codes($rendered)], [$PRINT,$PRINT], 'both arguments keep their colour');
+  is(coloured('a','b'), coloured('ab'), 'two arguments render like one argument with both');
+}
+
+# The unit is decided per argument. An unflagged argument is a byte stream
+# even when a flagged argument with characters sits next to it.
+{
+  my $aumlaut = wide(0xe4);
+  my $euro    = wide(0x20ac);
+
+  my $rendered = coloured("\xff",$aumlaut);
+  is(strip_ansi($rendered), '<ff><c3a4>', 'the byte stays <ff> and the character shows its UTF-8 bytes <c3a4>');
+  is_deeply([colour_codes($rendered)], [$BINARY,$BINARY], 'the byte and the character keep their colour');
+
+  $rendered = coloured("\xff",'a');
+  is(strip_ansi($rendered), '<ff>a', 'an unflagged byte argument next to a printable argument');
+
+  $rendered = coloured($aumlaut,$euro);
+  is(strip_ansi($rendered), '<c3a4><e282ac>', 'two flagged arguments render their UTF-8 bytes');
+
+  # The arguments are not joined into one string, a join would lift the
+  # unflagged argument into the flagged one and read the byte 0xff as the
+  # character U+00FF.
+  isnt(coloured("\xff",$aumlaut), coloured("\xff".$aumlaut), 'the arguments are not joined into a single string');
+}
+
 done_testing;
