@@ -3,9 +3,9 @@ use strict;
 use warnings;
 use Test::More;
 use Data::Coloured;
-# DDC is loaded without an import list: the alias module hands out all four
-# functions, but this file needs only its @EXPORT and must not get the
-# stubs of coloured and poloured over the real ones of Data::Coloured.
+# DDC is loaded without an import list, so it hands nothing to this file:
+# the probes below do their own importing in throw-away packages, and the
+# functions this file uses itself are the ones of Data::Coloured.
 use DDC ();
 
 # The export contract has two tiers and the asymmetry between them is
@@ -36,6 +36,9 @@ sub probe {
     }
     $seen{$name} = { defined => 1 };
     my $function = \&{$full};
+    # The alias module must hand out the functions of Data::Coloured
+    # themselves, not copies of its own.
+    $seen{$name}{same} = $function == \&{"Data::Coloured::$name"} ? 1 : 0;
     if ($name eq 'coloured' or $name eq 'c') {
       my $text = eval { $function->('a') };
       $seen{$name}{works} = defined $text ? 1 : 0;
@@ -98,20 +101,15 @@ is_deeply(\@DDC::EXPORT, [qw( pc c coloured poloured )], 'DDC re-exports all fou
 # The alias module hands out all four functions without an import list.
 {
   my $seen = import_into('Probe::DDC', 'use DDC;');
-  check_exports('use DDC', $seen, qw( pc c ));
+  check_exports('use DDC', $seen, qw( coloured poloured pc c ));
 
-  # TODO: DDC's @EXPORT names coloured and poloured, but DDC imports only pc
-  # and c from Data::Coloured. Exporter installs an empty stub for the two
-  # missing names, so a call dies with "Undefined subroutine". The fix is
-  # one line in lib/DDC.pm, until it is made the contract of the alias module
-  # is not met.
-  TODO: {
-    local $TODO = 'DDC imports only pc and c, so coloured and poloured are stubs';
-    ok($seen->{coloured}{defined}, 'use DDC gives the caller coloured');
-    ok($seen->{coloured}{works}, 'use DDC gives the caller a working coloured');
-    ok($seen->{poloured}{defined}, 'use DDC gives the caller poloured');
-    ok($seen->{poloured}{works}, 'use DDC gives the caller a working poloured');
-  };
+  # DDC's @EXPORT names all four functions, so DDC has to import all four
+  # from Data::Coloured. It imported only pc and c, so the two missing
+  # names were not defined at all: a call died with "Undefined subroutine
+  # &DDC::coloured called" instead of returning anything.
+  for my $name (qw( coloured poloured pc c )) {
+    ok($seen->{$name}{same}, "use DDC gives the caller the $name of Data::Coloured");
+  }
 }
 
 # The short aliases do the same as the functions they alias.

@@ -3,7 +3,7 @@ package DDC;
 
 use strict;
 use warnings;
-use Data::Coloured qw( pc c );
+use Data::Coloured qw( pc c coloured poloured );
 use Exporter 'import';
 
 our @EXPORT = qw( pc c coloured poloured );
@@ -13,6 +13,10 @@ our @EXPORT = qw( pc c coloured poloured );
 =head1 DESCRIPTION
 
 See L<Data::Coloured>
+
+DDC is an alias module for it. It exports the four functions C<coloured>,
+C<poloured>, C<c> and C<pc> under the same names, so that a script which
+wants only the visualiser needs a single import.
 
 =head1 SUPPORT
 

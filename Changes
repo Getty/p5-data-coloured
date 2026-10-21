@@ -9,3 +9,5 @@ Revision history for Data-Coloured
   - Continuous integration runs on GitHub Actions for Perl 5.36, 5.38 and 5.40.
   - Declare the runtime dependencies Term::ANSIColor and Exporter in the
     cpanfile, so the distribution installs its dependencies automatically.
+  - DDC exports all four functions coloured, poloured, pc and c, so a script
+    that imports DDC gets the complete API of Data::Coloured.
