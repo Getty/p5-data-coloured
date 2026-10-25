@@ -14,7 +14,8 @@ The export contract, the colour classes and the encoding rules live in skill
 ## Delegation
 
 Delegate behavior-relevant code to the right agent instead of touching it yourself —
-the principle and the lane boundaries are in `.claude/rules/data-coloured-rules.md`.
+the principle is a shared house rule (skilletor bundle `getty-cpan-dist@getty`); the lane
+boundaries are in `.claude/rules/data-coloured-rules.md`.
 
 | Task | Agent |
 |---|---|
