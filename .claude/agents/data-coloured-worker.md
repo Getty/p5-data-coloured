@@ -31,8 +31,8 @@ the alias, and never only in the script.
 This is a plain function module built on `Exporter` — not an OO class. Do not
 introduce `Moo`/`Moose`, a class, or `$self`. The export tiers (`@EXPORT` carries
 `coloured`/`poloured`, `@EXPORT_OK` carries `pc`/`c`), the three colour classes, the
-`TAB` naming of control code 9, and the byte-vs-character distinction that drives the
-known Unicode defect are all in your briefing — a change that alters what a caller
+`TAB` naming of control code 9, and the byte-vs-character distinction (the UTF-8 flag of an
+argument decides the unit) are all in your briefing — a change that alters what a caller
 receives (a changed return value, a changed rendering, a changed export set) wants a
 `Changes` entry under `{{$NEXT}}` naming the user-visible effect, and its POD updated
 in the same edit.

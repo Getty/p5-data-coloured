@@ -31,9 +31,10 @@ Work is coordinated on the repo's `karr` board (`karr board`).
 
 ## State of the code
 
-This distribution has not been touched since 2015 (CPAN release 0.003). It predates the
-current house structures — the CI is a Travis file, the `cpanfile` is missing its
-runtime dependency, `LICENSE`, `Changes` and `README.md` do not exist, and the
-character split mishandles multi-byte UTF-8 (open GitHub issue #1, tracked on the
-internal board). The `Changes` file and the release history start with the current
-work, not with the 2014/2015 releases.
+The tree follows the house structure: `dist.ini` carries the head plus
+`[@Author::GETTY]`, prerequisites live in `cpanfile`, `LICENSE`, `Changes` and
+`README.md` are committed, CI is `.github/workflows/ci.yml`, and every module under
+`lib/` and the script `bin/ddc` carry `our $VERSION` (the bundle rewrites it at
+release). The character split follows the UTF-8 flag of each argument — the rule is in
+skill `data-coloured-core`. The last CPAN release is 0.003; the `Changes` file starts
+with the current work.

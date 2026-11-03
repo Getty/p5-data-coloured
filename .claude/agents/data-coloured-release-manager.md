@@ -27,14 +27,15 @@ code goes back to the worker as a note on its card, not as your own fix. **Never
 `git push`, tag, or run `dzil release` — the maintainer's call every time.
 
 1. **`dist.ini`** — `[@Author::GETTY]` in use, `copyright_holder` and `copyright_year`
-   present. The repo's `$VERSION` in `lib/Data/Coloured.pm` is the *next unreleased*
-   number — the last CPAN release is 0.003, so the next is 0.004 — never copied back
-   from CPAN.
+   present. Every module under `lib/` and `bin/ddc` carries `our $VERSION`;
+   the bundle writes it at release (`[RewriteVersion::Transitional]`,
+   `[BumpVersionAfterRelease]`). The release number is the *next unreleased* one — the
+   last CPAN release is 0.003, so the next is 0.004 — never copied back from CPAN.
 
 2. **`cpanfile`** — every runtime dependency actually used is declared. The runtime
    set is `Term::ANSIColor` and `Exporter` (plus core), and `Test::More` under
-   `on test`. `Term::ANSIColor` is the one real dependency — if it is missing from the
-   cpanfile, the build is broken for everyone who does not have it locally.
+   `on test`. `Term::ANSIColor` is the one real dependency; prerequisites live only in
+   `cpanfile` (read by `[Prereqs::FromCPANfile]`), `dist.ini` holds head and bundle.
 
 3. **`Changes`** — a `{{$NEXT}}` section exists and covers the user-visible changes
    since the last release (`git log --oneline v0.003..`). Entries name the effect on a
@@ -55,7 +56,6 @@ Report: ready, or a concise list of what blocks release. Report blockers back; t
 
 ## Public tracker
 
-The repository has a public GitHub issue tracker with one open issue from 2014
-("Wrong output for Unicode chars"). Like every public tracker, it is **not** a work
+The repository has a public GitHub issue tracker. Like every public tracker, it is **not** a work
 queue: never read, comment on, close or create an issue here on your own initiative.
-The same defect is tracked on the internal karr board; work happens there.
+Work happens on the internal karr board.

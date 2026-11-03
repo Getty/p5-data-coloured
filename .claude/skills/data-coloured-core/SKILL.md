@@ -84,8 +84,7 @@ interprets or drops.
 
 ## The Unicode trap — read this before touching the character loop
 
-The trap is real, but it is **solved** since the fix of GitHub issue #1 ("Wrong output
-for Unicode chars", open since 2014). The rule that is in force now:
+The rule in force:
 
 **The UTF-8 flag of a string decides the unit of its rendering.**
 
@@ -110,7 +109,7 @@ Two properties stay fixed and are pinned by the test suite:
 2. **A multi-byte character is rendered from its UTF-8 bytes**, not from its code
    point, so what appears in the terminal is what the stream actually contained.
 
-The trap still lurks where the split happens: `split //` splits **by characters** when
+The sharp edge is where the split happens: `split //` splits **by characters** when
 the flag is set, and `unpack('H*', $char)` on a wide character yields its **code
 point**, not its UTF-8 bytes (`<e4>` instead of `<c3a4>`). That is why the hex branch
 encodes the character first (`_utf8_hex`) — a change to the loop must not lose that
