@@ -22,7 +22,7 @@ boundaries are in `.claude/rules/data-coloured-rules.md`.
 | Implement / refactor / debug behavior-relevant code | `data-coloured-worker` (default) |
 | Commits, `Changes`, card → done, pre-release audit | `data-coloured-release-manager` |
 
-The agents carry their skills via `briefing.skills` (see `.claude/agents/`); the main
+The agents carry their skills via `skills:` (see `.claude/agents/`); the main
 agent delegates rather than loading them. Skill sources live under `.claude/skills/` —
 `getty-perl-core`, `getty-perl-pod` and the karr skills are installed from the shared
 sources; `data-coloured-core` is owned by this repo.
